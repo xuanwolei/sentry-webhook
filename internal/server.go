@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
+	"strings"
 )
 
 type Handle struct {
@@ -101,11 +103,16 @@ type Req struct {
 }
 
 var (
-	Token *string
+	Token    string
+	Template string = "- 项目：@{project_name}\n- level：@{level}\n## 内容：\n```\n@{title}\n@{culprit}\n@{location}\n```\n- [查看更多](@{url})\n"
 )
 
 func init() {
-
+	Token = os.Getenv("TOKEN")
+	if os.Getenv("TEMPLATE") != "" {
+		Template = os.Getenv("TEMPLATE")
+		Template = strings.Replace(Template, "\\n", "\n", -1)
+	}
 }
 
 func ServeHandle() http.HandlerFunc {
@@ -119,7 +126,7 @@ func ServeHandle() http.HandlerFunc {
 		var req *Req
 		err = json.Unmarshal(body, &req)
 		if err != nil {
-			w.Write(returnMsg("json unmarshal fail:%v", err))
+			w.Write(returnMsg("json unmarshal body:%s,fail:%v", body, err))
 			return
 		}
 		HandleHook(r, req)
@@ -139,10 +146,11 @@ func HandleHook(r *http.Request, req *Req) error {
 	}
 	query := r.URL.Query()
 	token := query.Get("token")
-	fmt.Println("token", query.Get("token"))
-	content := "- 项目：@{project_name}\n- level：@{level}\n## 内容：\n```\n@{title}\n@{culprit}\n@{location}\n```\n- [查看更多](@{url})\n"
-	content = ReplaceParam(content, param)
-	fmt.Println("content", content)
+	if token == "" {
+		token = Token
+	}
+	content := ReplaceParam(Template, param)
+	fmt.Println("content:", content)
 	NewTalkRobot(token).Markdown("error", content).Send(false)
 	return nil
 }

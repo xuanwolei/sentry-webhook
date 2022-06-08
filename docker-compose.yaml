@@ -1,0 +1,14 @@
+version: '3.1'
+# docker-compose up --no-start datastore
+# docker-compose start datastore
+# docker-compose ps
+services:
+  sentry_webhook:
+    image: xuanwolei/sentry_webhook:v1
+    environment:
+      - TOKEN=xxx
+      - TEMPLATE=- 项目：@{project_name}\n- level：@{level}\n## error：\n```\n@{title}\n@{culprit}\n@{location}\n```\n- [查看更多](@{url})\n
+      - ADDR = 0.0.0.0:80
+#    network_mode: "host"
+    ports:
+      - 8910:80

@@ -4,12 +4,21 @@ import (
 	"fmt"
 	"github.com/xuanwolei/sentry_webhook/internal"
 	"net/http"
+	"os"
 )
 
 func main() {
-	addr := "0.0.0.0:8960"
-	fmt.Printf("listening addr:%s", addr)
+	addr := os.Getenv("ADDR")
+	if addr == "" {
+		addr = "0.0.0.0:80"
+	}
+
+	fmt.Println("listening addr:", addr)
 	http.HandleFunc("/", internal.ServeHandle())
-	http.ListenAndServe(addr, nil)
+	err := http.ListenAndServe(addr, nil)
+	if err != nil {
+		fmt.Println("listen error:", err)
+	}
+
 	fmt.Println("down")
 }
